@@ -4,23 +4,34 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Transaction } from "@/types";
+import { getTransactions } from "@/lib/firestoreService";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function TransactionsPage() {
-	const [transactions, setTransactions] = useState<Partial<Transaction>[]>([]);
+	const { user } = useAuth();
+	const [transactions, setTransactions] = useState<(Partial<Transaction> & { id: string })[]>([]);
 	const [loading, setLoading] = useState(true);
 
 	useEffect(() => {
-		// Load transactions from localStorage (temporary until Firestore integration)
-		const stored = localStorage.getItem("transactions");
-		if (stored) {
+		if (!user?.uid) {
+			setLoading(false);
+			return;
+		}
+
+		// Load transactions from Firestore
+		const loadTransactions = async () => {
 			try {
-				setTransactions(JSON.parse(stored));
+				const data = await getTransactions(user.uid);
+				setTransactions(data);
 			} catch (err) {
 				console.error("Failed to load transactions:", err);
+			} finally {
+				setLoading(false);
 			}
-		}
-		setLoading(false);
-	}, []);
+		};
+
+		loadTransactions();
+	}, [user?.uid]);
 
 	if (loading) {
 		return (
@@ -89,10 +100,10 @@ export default function TransactionsPage() {
 						</tr>
 					</thead>
 					<tbody className="divide-y divide-gray-200 dark:divide-slate-700">
-						{transactions.slice(0, 20).map((t, idx) => (
-							<tr key={idx} className="hover:bg-gray-50 dark:hover:bg-slate-700">
+						{transactions.slice(0, 50).map((t) => (
+							<tr key={t.id} className="hover:bg-gray-50 dark:hover:bg-slate-700">
 								<td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
-									{t.date instanceof Date ? t.date.toLocaleDateString() : t.date}
+									{t.date instanceof Date ? t.date.toLocaleDateString() : new Date(t.date as any).toLocaleDateString()}
 								</td>
 								<td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">{t.description}</td>
 								<td className="px-6 py-4 text-sm">

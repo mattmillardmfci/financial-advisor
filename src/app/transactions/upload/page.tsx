@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { parseCSV } from "@/lib/transactionParser";
 import { autoCategorizeTransaction, getCategorizationConfidence } from "@/lib/categorizer";
+import { saveTransactions } from "@/lib/firestoreService";
+import { useAuth } from "@/contexts/AuthContext";
 import { Transaction } from "@/types";
 import { Upload, CheckCircle, AlertCircle, Loader } from "lucide-react";
 import Link from "next/link";
@@ -10,6 +12,7 @@ import Link from "next/link";
 type UploadStep = "upload" | "preview" | "confirm" | "success";
 
 export default function TransactionUploadPage() {
+	const { user } = useAuth();
 	const [step, setStep] = useState<UploadStep>("upload");
 	const [file, setFile] = useState<File | null>(null);
 	const [transactions, setTransactions] = useState<Partial<Transaction>[]>([]);
@@ -76,17 +79,16 @@ export default function TransactionUploadPage() {
 	};
 
 	const handleConfirmUpload = async () => {
+		if (!user?.uid) {
+			setError("You must be logged in to upload transactions");
+			return;
+		}
+
 		setLoading(true);
 		try {
-			// Save transactions to localStorage (temporary until Firestore integration)
-			const existing = localStorage.getItem("transactions");
-			const existingTransactions = existing ? JSON.parse(existing) : [];
-			
-			// Combine with existing transactions
-			const allTransactions = [...existingTransactions, ...transactions];
-			localStorage.setItem("transactions", JSON.stringify(allTransactions));
-
-			console.log("Uploading transactions:", transactions);
+			// Save transactions to Firestore
+			await saveTransactions(user.uid, transactions);
+			console.log("Uploaded", transactions.length, "transactions to Firestore");
 
 			// Simulate delay
 			await new Promise((resolve) => setTimeout(resolve, 1000));
