@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Edit2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Transaction } from "@/types";
-import { getTransactionsPaginated, deleteTransaction } from "@/lib/firestoreService";
+import { getTransactionsPaginated, deleteTransaction, updateTransaction } from "@/lib/firestoreService";
 import { useAuth } from "@/contexts/AuthContext";
 import { QueryDocumentSnapshot } from "firebase/firestore";
 
@@ -16,6 +16,9 @@ export default function TransactionsPage() {
 	const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot | null>(null);
 	const [hasMore, setHasMore] = useState(false);
 	const [totalCount, setTotalCount] = useState(0);
+	const [editingId, setEditingId] = useState<string | null>(null);
+	const [newCategory, setNewCategory] = useState("");
+	const [saving, setSaving] = useState(false);
 
 	// Initial load - get first page of transactions (50 most recent)
 	useEffect(() => {
@@ -72,6 +75,24 @@ export default function TransactionsPage() {
 		} catch (err) {
 			console.error("Failed to delete transaction:", err);
 			alert("Failed to delete transaction. Please try again.");
+		}
+	};
+
+	const handleSaveCategory = async (transactionId: string) => {
+		if (!user?.uid || !newCategory) return;
+
+		setSaving(true);
+		try {
+			await updateTransaction(user.uid, transactionId, { category: newCategory });
+			setTransactions(
+				transactions.map((t) => (t.id === transactionId ? { ...t, category: newCategory } : t))
+			);
+			setEditingId(null);
+		} catch (err) {
+			console.error("Failed to update category:", err);
+			alert("Failed to update category. Please try again.");
+		} finally {
+			setSaving(false);
 		}
 	};
 
@@ -154,9 +175,50 @@ export default function TransactionsPage() {
 								</td>
 								<td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">{t.description}</td>
 								<td className="px-6 py-4 text-sm">
-									<span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-xs font-medium">
-										{t.category || "Other"}
-									</span>
+									{editingId === t.id ? (
+										<div className="flex gap-2">
+											<select
+												value={newCategory}
+												onChange={(e) => setNewCategory(e.target.value)}
+												className="px-2 py-1 bg-slate-700 border border-slate-600 rounded text-white text-xs">
+												<option value="Groceries">Groceries</option>
+												<option value="Restaurants">Restaurants</option>
+												<option value="Gas/Fuel">Gas/Fuel</option>
+												<option value="Utilities">Utilities</option>
+												<option value="Entertainment">Entertainment</option>
+												<option value="Shopping">Shopping</option>
+												<option value="Healthcare">Healthcare</option>
+												<option value="Transportation">Transportation</option>
+												<option value="Housing">Housing</option>
+												<option value="Insurance">Insurance</option>
+												<option value="Salary">Salary</option>
+												<option value="Transfer">Transfer</option>
+												<option value="Other">Other</option>
+											</select>
+											<button
+												onClick={() => handleSaveCategory(t.id)}
+												disabled={saving}
+												className="px-2 py-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white text-xs rounded">
+												Save
+											</button>
+											<button
+												onClick={() => setEditingId(null)}
+												className="px-2 py-1 bg-gray-600 hover:bg-gray-700 text-white text-xs rounded">
+												Cancel
+											</button>
+										</div>
+									) : (
+										<button
+											onClick={() => {
+												setEditingId(t.id);
+												setNewCategory(t.category || "Other");
+											}}
+											className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-900/50 text-blue-800 dark:text-blue-300 rounded-full text-xs font-medium flex items-center gap-1">
+											<Edit2 className="w-3 h-3" />
+											{t.category || "Other"}
+										</button>
+									)}
+								</td>
 								</td>
 								<td className="px-6 py-4 text-sm text-right font-medium text-gray-900 dark:text-gray-100">
 									${((t.amount || 0) / 100).toFixed(2)}

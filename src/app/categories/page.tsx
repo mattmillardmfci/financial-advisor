@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { CustomCategory } from "@/types";
 import { Plus, Trash2, Edit2 } from "lucide-react";
+import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import {
 	getCustomCategories,
@@ -128,6 +129,12 @@ export default function CategoriesPage() {
 					<h1 className="text-3xl font-bold text-gray-900 dark:text-white">Categories</h1>
 					<p className="text-gray-600 dark:text-gray-400 mt-2">Create and manage custom transaction categories</p>
 				</div>
+				<Link
+					href="/categories/management"
+					className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors">
+					Manage Transaction Categories
+				</Link>
+			</div>
 				{!showForm && (
 					<button
 						onClick={() => setShowForm(true)}
