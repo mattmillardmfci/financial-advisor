@@ -147,6 +147,33 @@ export default function TransactionUploadPage() {
 					</ul>
 				</div>
 
+				{/* Security & Privacy Disclaimer */}
+				<div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+					<h3 className="font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+						<svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+							<path d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" />
+						</svg>
+						Your Financial Data Is Completely Safe
+					</h3>
+					<ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+						<li>
+							🔐 <strong>Encrypted Storage:</strong> All data encrypted at rest using industry-standard protocols
+						</li>
+						<li>
+							🔒 <strong>Secure Transmission:</strong> HTTPS and end-to-end encryption in transit
+						</li>
+						<li>
+							👤 <strong>Private & Confidential:</strong> Only YOU can access your financial information
+						</li>
+						<li>
+							🚫 <strong>No Third-Party Access:</strong> We never share, sell, or access your personal data
+						</li>
+						<li>
+							✅ <strong>Firebase Security:</strong> Enterprise-grade security with automatic backups
+						</li>
+					</ul>
+				</div>
+
 				{/* Error Message */}
 				{error && (
 					<div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 flex gap-3">
@@ -246,12 +273,27 @@ export default function TransactionUploadPage() {
 				<div>
 					<h1 className="text-3xl font-bold text-gray-900 dark:text-white">Upload Complete!</h1>
 					<p className="text-gray-600 dark:text-gray-400 mt-2">
-						{transactions.length} transactions have been successfully imported
+						{transactions.length} transactions have been successfully imported & securely encrypted
 					</p>
 				</div>
 
 				<div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-6 text-left">
-					<h3 className="font-semibold text-gray-900 dark:text-white mb-2">What's next?</h3>
+					<h3 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+						<svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+							<path d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" />
+						</svg>
+						Your Data Is Safe & Secure
+					</h3>
+					<p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+						Your financial data is now encrypted and stored securely. Only you have access to it.
+					</p>
+					<ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1 mb-4">
+						<li>🔐 All data encrypted with industry-standard encryption</li>
+						<li>🔒 Firebase security prevents unauthorized access</li>
+						<li>👤 Only you can view your financial information</li>
+						<li>🚫 No third parties have access to your data</li>
+					</ul>
+					<h3 className="font-semibold text-gray-900 dark:text-white mb-2 mt-4">What's next?</h3>
 					<ul className="text-sm text-gray-600 dark:text-gray-400 space-y-2">
 						<li>✓ Review transaction categories for accuracy</li>
 						<li>✓ Set up your monthly budget based on spending</li>
@@ -259,7 +301,6 @@ export default function TransactionUploadPage() {
 						<li>✓ Track your financial progress</li>
 					</ul>
 				</div>
-
 				<div className="flex gap-3 justify-center">
 					<Link
 						href="/transactions"

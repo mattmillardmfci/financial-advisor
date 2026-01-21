@@ -22,16 +22,16 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const functions = getFunctions(app);
 
-// Connect to emulators in development
-if (process.env.NODE_ENV === "development" && typeof window !== "undefined") {
-	try {
-		// These functions set a flag internally to prevent multiple connections
-		connectAuthEmulator(auth, "http://localhost:9099", { disableWarnings: true });
-		connectFirestoreEmulator(db, "localhost", 8080);
-		connectFunctionsEmulator(functions, "localhost", 5001);
-	} catch (error) {
-		// Emulator already connected
-	}
-}
+// Connect to emulators in development (disabled - using real Firebase)
+// Uncomment below to use Firebase Emulator Suite
+// if (process.env.NODE_ENV === "development" && typeof window !== "undefined") {
+// 	try {
+// 		connectAuthEmulator(auth, "http://localhost:9099", { disableWarnings: true });
+// 		connectFirestoreEmulator(db, "localhost", 8080);
+// 		connectFunctionsEmulator(functions, "localhost", 5001);
+// 	} catch (error) {
+// 		// Emulator already connected
+// 	}
+// }
 
 export default app;
