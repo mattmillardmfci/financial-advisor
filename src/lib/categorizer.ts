@@ -205,7 +205,7 @@ const CATEGORY_KEYWORDS: Record<TransactionCategory, string[]> = {
 /**
  * Auto-categorize a transaction based on merchant and description
  */
-export function autoCategorizeTrans action(
+export function autoCategorizeTransaction(
   description: string,
   merchant?: string
 ): TransactionCategory {

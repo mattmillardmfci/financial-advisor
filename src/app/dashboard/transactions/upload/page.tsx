@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { parseCSV } from '@/lib/transactionParser';
-import { autoCategorizeTrans action, getCategorizationConfidence } from '@/lib/categorizer';
+import { autoCategorizeTransaction, getCategorizationConfidence } from '@/lib/categorizer';
 import { Transaction } from '@/types';
 import { Upload, CheckCircle, AlertCircle, Loader } from 'lucide-react';
 import Link from 'next/link';
@@ -60,7 +60,7 @@ export default function TransactionUploadPage() {
       // Auto-categorize transactions
       const categorized = parsed.map((t) => ({
         ...t,
-        category: autoCategorizeTrans action(t.description || '', t.merchant),
+        category: autoCategorizeTransaction(t.description || '', t.merchant),
         confidence: getCategorizationConfidence(
           t.description || '',
           t.merchant,
