@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { TrendingDown, TrendingUp, Wallet, AlertCircle, Plus } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { getTransactions, getDebts } from "@/lib/firestoreService";
 
 interface DashboardMetrics {
 	netWorth: number;
@@ -27,9 +28,51 @@ export default function DashboardPage() {
 	const [hasData, setHasData] = useState(false);
 
 	useEffect(() => {
-		// TODO: Fetch actual metrics from Firestore
-		// For now, showing placeholder
-		setHasData(false);
+		if (!user?.uid) {
+			setHasData(false);
+			return;
+		}
+
+		// Fetch data from Firestore and calculate metrics
+		const loadMetrics = async () => {
+			try {
+				const [transactions, debts] = await Promise.all([getTransactions(user.uid), getDebts(user.uid)]);
+
+				// Calculate total debt
+				const totalDebt = debts.reduce((sum, d) => sum + (d.balance || 0), 0);
+
+				// Calculate monthly expenses from transactions (current month)
+				const now = new Date();
+				const currentMonth = now.getMonth();
+				const currentYear = now.getFullYear();
+
+				const monthlyExpenses = transactions
+					.filter((t) => {
+						const transDate = t.date instanceof Date ? t.date : new Date(t.date as any);
+						return transDate.getMonth() === currentMonth && transDate.getFullYear() === currentYear;
+					})
+					.reduce((sum, t) => sum + (t.amount || 0), 0);
+
+				// Calculate net worth (assuming no asset data, so just inverse of debt)
+				const netWorth = -totalDebt;
+
+				setMetrics({
+					netWorth: Math.round(netWorth / 100),
+					monthlyIncome: 0, // TODO: Add income tracking
+					monthlyExpenses: Math.round(monthlyExpenses / 100),
+					savingsRate: 0, // TODO: Calculate from income/expenses
+					totalDebt: Math.round(totalDebt / 100),
+					budgetUsage: 0, // TODO: Integrate with budgets
+				});
+
+				setHasData(transactions.length > 0 || debts.length > 0);
+			} catch (err) {
+				console.error("Failed to load metrics:", err);
+				setHasData(false);
+			}
+		};
+
+		loadMetrics();
 	}, [user?.uid]);
 
 	return (

@@ -1,13 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Debt } from "@/types";
 import { Plus, Trash2, Calculator } from "lucide-react";
 import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
+import { getDebts, saveDebt, deleteDebt } from "@/lib/firestoreService";
 
 export default function DebtsPage() {
-	const [debts, setDebts] = useState<Debt[]>([]);
+	const { user } = useAuth();
+	const [debts, setDebts] = useState<(Partial<Debt> & { id: string })[]>([]);
 	const [showForm, setShowForm] = useState(false);
+	const [loading, setLoading] = useState(true);
 	const [formData, setFormData] = useState<Partial<Debt>>({
 		type: "credit-card",
 		balance: 0,
@@ -16,44 +20,87 @@ export default function DebtsPage() {
 		monthlyPayment: 0,
 	});
 
-	const handleAddDebt = () => {
+	// Load debts from Firestore
+	useEffect(() => {
+		if (!user?.uid) {
+			setLoading(false);
+			return;
+		}
+
+		const loadDebts = async () => {
+			try {
+				const data = await getDebts(user.uid);
+				setDebts(data);
+			} catch (err) {
+				console.error("Failed to load debts:", err);
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		loadDebts();
+	}, [user?.uid]);
+
+	const handleAddDebt = async () => {
 		if (!formData.name || formData.balance === undefined) {
 			alert("Please fill in all required fields");
 			return;
 		}
 
-		const newDebt: Debt = {
-			id: `debt-${Date.now()}`,
-			userId: "current-user-id", // TODO: Get from auth context
-			name: formData.name,
-			balance: Math.round((formData.balance as number) * 100),
-			interestRate: formData.interestRate || 0,
-			minimumPayment: Math.round((formData.minimumPayment || 0) * 100),
-			monthlyPayment: Math.round((formData.monthlyPayment || formData.minimumPayment || 0) * 100),
-			creditor: formData.creditor,
-			type: formData.type || "credit-card",
-			createdAt: new Date(),
-			updatedAt: new Date(),
-		};
+		if (!user?.uid) {
+			alert("You must be logged in to add a debt");
+			return;
+		}
 
-		setDebts([...debts, newDebt]);
-		setFormData({
-			type: "credit-card",
-			balance: 0,
-			interestRate: 0,
-			minimumPayment: 0,
-			monthlyPayment: 0,
-		});
-		setShowForm(false);
+		try {
+			const newDebt: Partial<Debt> = {
+				name: formData.name,
+				balance: Math.round((formData.balance as number) * 100),
+				interestRate: formData.interestRate || 0,
+				minimumPayment: Math.round((formData.minimumPayment || 0) * 100),
+				monthlyPayment: Math.round((formData.monthlyPayment || formData.minimumPayment || 0) * 100),
+				creditor: formData.creditor,
+				type: formData.type || "credit-card",
+			};
+
+			// Save to Firestore
+			const docId = await saveDebt(user.uid, newDebt);
+
+			// Add to local state with ID
+			setDebts([...debts, { ...newDebt, id: docId }]);
+			setFormData({
+				type: "credit-card",
+				balance: 0,
+				interestRate: 0,
+				minimumPayment: 0,
+				monthlyPayment: 0,
+			});
+			setShowForm(false);
+		} catch (err) {
+			console.error("Failed to save debt:", err);
+			alert("Failed to save debt. Please try again.");
+		}
 	};
 
-	const handleDeleteDebt = (id: string) => {
-		setDebts(debts.filter((d) => d.id !== id));
+	const handleDeleteDebt = async (id: string) => {
+		if (!user?.uid) return;
+
+		if (!confirm("Are you sure you want to delete this debt?")) {
+			return;
+		}
+
+		try {
+			await deleteDebt(user.uid, id);
+			setDebts(debts.filter((d) => d.id !== id));
+		} catch (err) {
+			console.error("Failed to delete debt:", err);
+			alert("Failed to delete debt. Please try again.");
+		}
 	};
 
-	const totalDebt = debts.reduce((sum, d) => sum + d.balance, 0);
-	const totalMinimumPayment = debts.reduce((sum, d) => sum + d.minimumPayment, 0);
-	const avgInterestRate = debts.length > 0 ? debts.reduce((sum, d) => sum + d.interestRate, 0) / debts.length : 0;
+	const totalDebt = debts.reduce((sum, d) => sum + (d.balance || 0), 0);
+	const totalMinimumPayment = debts.reduce((sum, d) => sum + (d.minimumPayment || 0), 0);
+	const avgInterestRate = debts.length > 0 ? debts.reduce((sum, d) => sum + (d.interestRate || 0), 0) / debts.length : 0;
 
 	return (
 		<div className="space-y-6">
@@ -280,33 +327,33 @@ export default function DebtsPage() {
 							</thead>
 							<tbody className="divide-y divide-gray-200 dark:divide-slate-700">
 								{debts.map((debt) => (
-									<tr key={debt.id} className="hover:bg-gray-50 dark:hover:bg-slate-700">
-										<td className="px-6 py-4">
-											<div>
-												<p className="font-medium text-gray-900 dark:text-white">{debt.name}</p>
-												<p className="text-xs text-gray-600 dark:text-gray-400">{debt.creditor || debt.type}</p>
-											</div>
-										</td>
-										<td className="px-6 py-4 text-right text-gray-900 dark:text-white">
-											${(debt.balance / 100).toFixed(2)}
-										</td>
-										<td className="px-6 py-4 text-right text-gray-900 dark:text-white">
-											{debt.interestRate.toFixed(2)}%
-										</td>
-										<td className="px-6 py-4 text-right text-gray-900 dark:text-white">
-											${(debt.minimumPayment / 100).toFixed(2)}
-										</td>
-										<td className="px-6 py-4 text-right text-gray-900 dark:text-white">
-											${(debt.monthlyPayment / 100).toFixed(2)}
-										</td>
-										<td className="px-6 py-4 text-right">
-											<button
-												onClick={() => handleDeleteDebt(debt.id)}
-												className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors">
-												<Trash2 className="w-4 h-4" />
-											</button>
-										</td>
-									</tr>
+								<tr key={debt.id} className="hover:bg-gray-50 dark:hover:bg-slate-700">
+									<td className="px-6 py-4">
+										<div>
+											<p className="font-medium text-gray-900 dark:text-white">{debt.name}</p>
+											<p className="text-xs text-gray-600 dark:text-gray-400">{debt.creditor || debt.type}</p>
+										</div>
+									</td>
+									<td className="px-6 py-4 text-right text-gray-900 dark:text-white">
+										${((debt.balance || 0) / 100).toFixed(2)}
+									</td>
+									<td className="px-6 py-4 text-right text-gray-900 dark:text-white">
+										{(debt.interestRate || 0).toFixed(2)}%
+									</td>
+									<td className="px-6 py-4 text-right text-gray-900 dark:text-white">
+										${((debt.minimumPayment || 0) / 100).toFixed(2)}
+									</td>
+									<td className="px-6 py-4 text-right text-gray-900 dark:text-white">
+										${((debt.monthlyPayment || 0) / 100).toFixed(2)}
+									</td>
+									<td className="px-6 py-4 text-right">
+										<button
+											onClick={() => handleDeleteDebt(debt.id)}
+											className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors">
+											<Trash2 className="w-4 h-4" />
+										</button>
+									</td>
+								</tr>
 								))}
 							</tbody>
 						</table>

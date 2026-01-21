@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Transaction } from "@/types";
-import { getTransactions } from "@/lib/firestoreService";
+import { getTransactions, deleteTransaction } from "@/lib/firestoreService";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function TransactionsPage() {
@@ -32,6 +32,22 @@ export default function TransactionsPage() {
 
 		loadTransactions();
 	}, [user?.uid]);
+
+	const handleDeleteTransaction = async (transactionId: string) => {
+		if (!user?.uid) return;
+
+		if (!confirm("Are you sure you want to delete this transaction?")) {
+			return;
+		}
+
+		try {
+			await deleteTransaction(user.uid, transactionId);
+			setTransactions(transactions.filter((t) => t.id !== transactionId));
+		} catch (err) {
+			console.error("Failed to delete transaction:", err);
+			alert("Failed to delete transaction. Please try again.");
+		}
+	};
 
 	if (loading) {
 		return (
@@ -85,18 +101,11 @@ export default function TransactionsPage() {
 				<table className="w-full">
 					<thead className="bg-gray-50 dark:bg-slate-700 border-b border-gray-200 dark:border-slate-600">
 						<tr>
-							<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-								Date
-							</th>
-							<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-								Description
-							</th>
-							<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-								Category
-							</th>
-							<th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-								Amount
-							</th>
+							<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Date</th>
+							<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Description</th>
+							<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Category</th>
+							<th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Amount</th>
+							<th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Action</th>
 						</tr>
 					</thead>
 					<tbody className="divide-y divide-gray-200 dark:divide-slate-700">
@@ -113,6 +122,13 @@ export default function TransactionsPage() {
 								</td>
 								<td className="px-6 py-4 text-sm text-right font-medium text-gray-900 dark:text-gray-100">
 									${((t.amount || 0) / 100).toFixed(2)}
+								</td>
+								<td className="px-6 py-4 text-sm text-right">
+									<button
+										onClick={() => handleDeleteTransaction(t.id)}
+										className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors">
+										<Trash2 className="w-4 h-4" />
+									</button>
 								</td>
 							</tr>
 						))}
