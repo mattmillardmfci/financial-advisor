@@ -10,13 +10,20 @@ export async function parseCSV(file: File): Promise<Partial<Transaction>[]> {
 		Papa.parse(file, {
 			header: true,
 			skipEmptyLines: true,
+			dynamicTyping: false,
 			complete: (results) => {
 				try {
 					const rows = results.data as Record<string, string>[];
-					
-					// Parse rows and filter out the header row and empty rows
+
+					// Parse rows and filter out header row (where Date equals "Date" literally)
 					const parsed = rows
-						.filter((row) => row.Date && Object.keys(row).length > 0)
+						.filter(
+							(row) =>
+								row.Date &&
+								row.Date.trim() !== "Date" &&
+								row.Date.trim().length > 0 &&
+								Object.keys(row).length > 0
+						)
 						.map((row) => parseCSVRow(row));
 
 					// Filter out invalid transactions
