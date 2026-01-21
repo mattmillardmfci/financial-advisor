@@ -444,3 +444,44 @@ export async function updateIncome(userId: string, incomeId: string, updates: Pa
 		throw error;
 	}
 }
+
+/**
+ * Delete all transactions for a user
+ */
+export async function deleteAllTransactions(userId: string) {
+	try {
+		const transactionsRef = getTransactionsRef(userId);
+		const snapshot = await getDocs(transactionsRef);
+
+		const deletePromises = snapshot.docs.map((doc) => deleteDoc(doc.ref));
+		await Promise.all(deletePromises);
+	} catch (error) {
+		console.error("Error deleting all transactions:", error);
+		throw error;
+	}
+}
+
+/**
+ * Delete all user data (transactions, debts, budgets, categories, income)
+ * WARNING: This is destructive and cannot be undone
+ */
+export async function deleteAllUserData(userId: string) {
+	try {
+		const collections = [
+			getTransactionsRef(userId),
+			getDebtsRef(userId),
+			getBudgetsRef(userId),
+			getCategoriesRef(userId),
+			getIncomeRef(userId),
+		];
+
+		for (const collectionRef of collections) {
+			const snapshot = await getDocs(collectionRef);
+			const deletePromises = snapshot.docs.map((doc) => deleteDoc(doc.ref));
+			await Promise.all(deletePromises);
+		}
+	} catch (error) {
+		console.error("Error deleting all user data:", error);
+		throw error;
+	}
+}

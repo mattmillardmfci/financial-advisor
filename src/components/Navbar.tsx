@@ -45,8 +45,7 @@ export function Navbar() {
 										isActive
 											? "bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100"
 											: "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-									}`}
-								>
+									}`}>
 									<Icon className="w-4 h-4 mr-2" />
 									{item.label}
 								</button>
@@ -56,13 +55,10 @@ export function Navbar() {
 
 					{/* User Menu */}
 					<div className="flex items-center space-x-4">
-						<span className="text-sm text-gray-600 dark:text-gray-400 hidden sm:inline">
-							{user?.email}
-						</span>
+						<span className="text-sm text-gray-600 dark:text-gray-400 hidden sm:inline">{user?.email}</span>
 						<button
 							onClick={handleLogout}
-							className="inline-flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300"
-						>
+							className="inline-flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300">
 							<LogOut className="w-4 h-4" />
 						</button>
 					</div>
@@ -81,8 +77,7 @@ export function Navbar() {
 									isActive
 										? "bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100"
 										: "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-								}`}
-							>
+								}`}>
 								<Icon className="w-3 h-3 mr-1" />
 								{item.label}
 							</button>

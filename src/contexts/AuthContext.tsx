@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { User as FirebaseUser, onAuthStateChanged, signOut } from "firebase/auth";
+import { User as FirebaseUser, onAuthStateChanged, signOut, updateProfile } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { User } from "@/types";
 
@@ -11,6 +11,7 @@ interface AuthContextType {
 	loading: boolean;
 	logout: () => Promise<void>;
 	isAuthenticated: boolean;
+	updateDisplayName: (displayName: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -52,8 +53,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 		}
 	};
 
+	const updateDisplayName = async (displayName: string) => {
+		try {
+			if (!firebaseUser) throw new Error("No user logged in");
+			
+			await updateProfile(firebaseUser, { displayName });
+			
+			// Update local state
+			setUser((prevUser) =>
+				prevUser ? { ...prevUser, displayName } : null
+			);
+		} catch (error) {
+			console.error("Error updating display name:", error);
+			throw error;
+		}
+	};
+
 	return (
-		<AuthContext.Provider value={{ user, firebaseUser, loading, logout, isAuthenticated: !!user }}>
+		<AuthContext.Provider value={{ user, firebaseUser, loading, logout, isAuthenticated: !!user, updateDisplayName }}>
 			{children}
 		</AuthContext.Provider>
 	);
